@@ -1,0 +1,111 @@
+<html>
+<head>
+  <title>A Leaflet map!</title>
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="heatmap.js"></script>
+  <script src="leaflet-heatmap.js"></script>
+  <script src="leaflet-heat.js"></script>
+  <style>
+    #map{ height: 100% }
+  </style>
+</head>
+<body>
+ 
+  <div id="map"></div>
+ 
+  <script>
+
+  // initialize the map
+  // var map = L.map('map').setView([42.35, -71.08], 13);
+ 
+  // // load a tile layer
+  // L.tileLayer('http://tiles.mapc.org/basemap/{z}/{x}/{y}.png',
+  //   {
+  //     attribution: 'Tiles by <a href="http://mapc.org">MAPC</a>, Data by <a href="http://mass.gov/mgis">MassGIS</a>',
+  //     maxZoom: 17,
+  //     minZoom: 9  
+  //   }).addTo(map);
+    
+  // map.setZoom(12);
+
+  $.getJSON("data.json",function(data){
+  // $.getJSON("rodents.geojson",function(data){
+    //   var testData = {
+    //   max: 8,
+    //   data: [{lat: 24.6408, lng:46.7728, count: 3},{lat: 50.75, lng:-1.55, count: 1}]
+    // };
+
+    var baseLayer = L.tileLayer(
+      ' https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',{
+      // 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+        attribution: '...',
+        maxZoom: 18
+      }
+    );
+
+    var cfg = {
+      // radius should be small ONLY if scaleRadius is true (or small radius is intended)
+      // if scaleRadius is false it will be the constant radius used in pixels
+      "radius": 2,
+      "maxOpacity": .8,
+      // scales the radius based on map zoom
+      "scaleRadius": true,
+      // if set to false the heatmap uses the global maximum for colorization
+      // if activated: uses the data maximum within the current map boundaries
+      //   (there will always be a red spot with useLocalExtremas true)
+      "useLocalExtrema": false,
+      // which field name in your data represents the latitude - default "lat"
+      latField: 'lat',
+      // which field name in your data represents the longitude - default "lng"
+      lngField: 'lng',
+      // which field name in your data represents the data value - default "value"
+      valueField: 'count'
+    };
+
+
+    // var heatmapLayer = new HeatmapOverlay(cfg);
+
+    var map = new L.Map('map', {
+      center: new L.LatLng(28.5383, -81.3792),
+      // center: new L.LatLng(25.6586, -80.3568),
+      zoom: 13,
+      // layers: [baseLayer, heatmapLayer]
+      layers: [baseLayer]
+    });
+
+    // heatmapLayer.setData(data);
+
+    // d = []
+    // for(p of data.data){
+    //   console.log(p)
+    //   d.push([p.lat, p.lng, 0.5])
+    // }
+
+    var index = 0;
+    var keys = Object.keys(data).sort();
+    console.log(keys)
+    window.heat = L.heatLayer(data["2019"], {
+      radius: 11,
+      blur: 15
+    }).addTo(map);
+
+    for (var i = 0; i < 50; i++) {
+      keys.push(keys[keys.length-1])
+    }
+
+    setInterval(function(){
+      var d = [];
+      for (var i = 0; i < index; i++) {
+        d = d.concat(data[keys[i]])
+      }
+      heat.setLatLngs(d);
+      index = (index+1) % keys.length;
+
+    }, 100)
+  });
+ 
+  </script>
+</body>
+</html>
